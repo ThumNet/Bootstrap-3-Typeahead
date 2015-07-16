@@ -75,23 +75,23 @@
 
     select: function () {
       var val = this.$menu.find('.active').data('value');
-      
+
       // No active item or active item is searchItem -> afterSearch()
-      if (!val || val === this.options.searchItem) { 
-        this.afterSearch(this.query);                
-      } 
+      if (!val || val === this.options.searchItem) {
+        this.afterSearch(this.query);
+      }
       // active item is addItem -> afterAdd()
-      else if (val === this.options.addItem){         
+      else if (val === this.options.addItem) {
         this.afterAdd(this.query);
       }
-      // autoselect or active item -> afterSelect() 
+      // autoselect or active item -> afterSelect()
       else if (this.autoSelect || val) {
         var newVal = this.updater(val);
         this.$element
           .val(this.displayText(newVal) || newVal)
           .change();
         this.afterSelect(newVal);
-      } 
+      }
       return this.hide();
     },
 
@@ -104,18 +104,15 @@
     },
 
     show: function () {
-      var pos = $.extend({}, this.$element.position(), {
-        height: this.$element[0].offsetHeight
-      }), scrollHeight;
-
-      scrollHeight = typeof this.options.scrollHeight == 'function' ?
+      var pos = $.extend({}, this.$element.position(), { height: this.$element[0].offsetHeight });
+      var scrollHeight = typeof this.options.scrollHeight == 'function' ?
         this.options.scrollHeight.call() :
         this.options.scrollHeight;
 
       (this.$appendTo ? this.$menu.appendTo(this.$appendTo) : this.$menu.insertAfter(this.$element))
         .css({
-          top: pos.top + pos.height + scrollHeight
-          , left: pos.left
+          top: pos.top + pos.height + scrollHeight,
+          left: pos.left
         })
         .show();
 
@@ -169,18 +166,18 @@
         this.$element.data('active', items[0]);
       } else {
         this.$element.data('active', null);
-      }      
+      }
 
       // Limit the items to show if needed
       if (this.options.items != 'all' && items.length > this.options.items) {
         items = items.slice(0, this.options.items);
-        
+
         // Add search items
         if (this.options.searchItem) {
           items.push(this.options.searchItem);
         }
       }
-      
+
       // Add item
       if (this.options.addItem) {
         items.push(this.options.addItem);
@@ -195,10 +192,10 @@
     },
 
     sorter: function (items) {
-      var beginswith = []
-        , caseSensitive = []
-        , caseInsensitive = []
-        , item;
+      var beginswith = [],
+          caseSensitive = [],
+          caseInsensitive = [],
+          item;
 
       while ((item = items.shift())) {
         var it = this.displayText(item);
@@ -241,7 +238,7 @@
         // if the current item is the searchItem or addItem just add it as html
         if (item === that.options.searchItem || item === that.options.addItem) {
           i.find('a').html(item);
-        } else {          
+        } else {
           var text = that.displayText(item);
           i.find('a').html(that.highlighter(text));
           if (text == that.$element.val()) {
@@ -266,8 +263,8 @@
     },
 
     next: function (event) {
-      var active = this.$menu.find('.active').removeClass('active')
-        , next = active.next();
+      var active = this.$menu.find('.active').removeClass('active'),
+          next = active.next();
 
       if (!next.length) {
         next = $(this.$menu.find('li')[0]);
@@ -277,8 +274,8 @@
     },
 
     prev: function (event) {
-      var active = this.$menu.find('.active').removeClass('active')
-        , prev = active.prev();
+      var active = this.$menu.find('.active').removeClass('active'),
+          prev = active.prev();
 
       if (!prev.length) {
         prev = this.$menu.find('li').last();
@@ -383,7 +380,7 @@
           if (!this.shown) {
             this.afterSearch(this.query);
             return;
-          } 
+          }
           this.select();
           break;
 
@@ -443,9 +440,9 @@
       return this.data('active');
     }
     return this.each(function () {
-      var $this = $(this)
-        , data = $this.data('typeahead')
-        , options = typeof option == 'object' && option;
+      var $this = $(this),
+          data = $this.data('typeahead'),
+          options = typeof option == 'object' && option;
       if (!data) $this.data('typeahead', (data = new Typeahead(this, options)));
       if (typeof option == 'string') {
         if (arg.length > 1) {
@@ -458,19 +455,19 @@
   };
 
   $.fn.typeahead.defaults = {
-    source: []
-    , items: 8
-    , menu: '<ul class="typeahead dropdown-menu" role="listbox"></ul>'
-    , item: '<li><a href="#" role="option"></a></li>'
-    , minLength: 1
-    , scrollHeight: 0
-    , autoSelect: true
-    , afterSelect: $.noop
-    , afterSearch: $.noop
-    , afterAdd: $.noop
-    , addItem: false
-    , searchItem: false
-    , delay: 0    
+    source: [],
+    items: 8,
+    menu: '<ul class="typeahead dropdown-menu" role="listbox"></ul>',
+    item: '<li><a href="#" role="option"></a></li>',
+    minLength: 1,
+    scrollHeight: 0,
+    autoSelect: true,
+    afterSelect: $.noop,
+    afterSearch: $.noop,
+    afterAdd: $.noop,
+    addItem: false,
+    searchItem: false,
+    delay: 0
   };
 
   $.fn.typeahead.Constructor = Typeahead;
