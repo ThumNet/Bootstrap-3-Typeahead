@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="bootstrap3-typeahead.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  </head>
+  
+  <body>
+    <div class="container body-content">
+      <h2>Search US states</h2>
+      <input type="text" id="typeaheadInput" autocomplete="off" />
+    </div>
+    
+    <script>
+      $(document).ready(function(){
+        
+        var usStates = [
+          { "state":"Alabama", "abbr":"AL", "capital":"Montgomery" }, 
+          { "state":"Alaska", "abbr":"AK", "capital":"Juneau" }, 
+          { "state":"Arizona", "abbr":"AZ", "capital":"Phoenix" }, 
+          { "state":"Arkansas", "abbr":"AR", "capital":"Little Rock" }, 
+          { "state":"California", "abbr":"CA", "capital":"Sacramento" }, 
+          { "state":"Colorado", "abbr":"CO", "capital":"Denver" }, 
+          { "state":"Connecticut", "abbr":"CT", "capital":"Hartford" }, 
+          { "state":"Delaware", "abbr":"DE", "capital":"Dover" }, 
+          { "state":"Florida", "abbr":"FL", "capital":"Tallahassee" },
+          { "state":"Georgia", "abbr":"GA", "capital":"Atlanta" }, 
+          { "state":"Hawaii", "abbr":"HI", "capital":"Honolulu" }, 
+          { "state":"Idaho", "abbr":"ID", "capital":"Boise" }, 
+          { "state":"Illinois", "abbr":"IL", "capital":"Springfield" }, 
+          { "state":"Indiana", "abbr":"IN", "capital":"Indianapolis" }, 
+          { "state":"Iowa", "abbr":"IA", "capital":"Des Moines" }, 
+          { "state":"Kansas", "abbr":"KS", "capital":"Topeka" }, 
+          { "state":"Kentucky", "abbr":"KY", "capital":"Frankfort" }, 
+          { "state":"Louisiana", "abbr":"LA", "capital":"Baton Rouge" }, 
+          { "state":"Maine", "abbr":"ME", "capital":"Augusta" }, 
+          { "state":"Maryland", "abbr":"MD", "capital":"Annapolis"}, 
+          { "state":"Massachusetts", "abbr":"MA", "capital":"Boston" }, 
+          { "state":"Michigan", "abbr":"MI", "capital":"Lansing" },
+          { "state":"Minnesota", "abbr":"MN", "capital":"St. Paul" }, 
+          { "state":"Mississippi", "abbr":"MS", "capital":"Jackson" },
+          { "state":"Missouri", "abbr":"MO", "capital":"Jefferson City" }, 
+          { "state":"Montana", "abbr":"MT", "capital":"Helena" },
+          { "state":"Nebraska", "abbr":"NE", "capital":"Lincoln" }, 
+          { "state":"Nevada", "abbr":"NV", "capital":"Carson City" }, 
+          { "state":"New Hampshire", "abbr":"NH", "capital":"Concord" }, 
+          { "state":"New Jersey", "abbr":"NJ", "capital":"Trenton" }, 
+          { "state":"New Mexico", "abbr":"NM", "capital":"Santa Fe" }, 
+          { "state":"New York", "abbr":"NY", "capital":"Albany" }, 
+          { "state":"North Carolina", "abbr":"NC", "capital":"Raleigh" }, 
+          { "state":"North Dakota", "abbr":"ND", "capital":"Bismarck" }, 
+          { "state":"Ohio", "abbr":"OH","capital":"Columbus" }, 
+          { "state":"Oklahoma", "abbr":"OK", "capital":"Oklahoma City" }, 
+          { "state":"Oregon", "abbr":"OR", "capital":"Salem" }, 
+          { "state":"Pennsylvania", "abbr":"PA", "capital":"Harrisburg" }, 
+          { "state":"Rhode Island", "abbr":"RI", "capital":"Providence" }, 
+          { "state":"South Carolina", "abbr":"SC", "capital":"Columbia" }, 
+          { "state":"South Dakota", "abbr":"SD", "capital":"Pierre" }, 
+          { "state":"Tennessee", "abbr":"TN", "capital":"Nashville" }, 
+          { "state":"Texas", "abbr":"TX", "capital":"Austin" }, 
+          { "state":"Utah", "abbr":"UT", "capital":"Salt Lake City" }, 
+          { "state":"Vermont", "abbr":"VT", "capital":"Montpelier" }, 
+          { "state":"Virginia", "abbr":"VA", "capital":"Richmond" }, 
+          { "state":"Washington", "abbr":"WA", "capital":"Olympia" },
+          { "state":"West Virginia", "abbr":"WV", "capital":"Charleston" }, 
+          { "state":"Wisconsin", "abbr":"WI", "capital":"Madison"}, 
+          { "state":"Wyoming", "abbr":"WY", "capital":"Cheyenne" }
+        ];
+        
+        $('#typeaheadInput').typeahead({
+          source: usStates,
+          minLength: 1,
+          autoSelect: false, 
+          items: 5,
+          displayText: function (item) { return item.state; },
+          afterSelect: function (item) { console.log('Selected item: ' + item.state); },
+          afterSearch: function (query) { console.log('Searched for: ' + query); },
+          afterAdd: function (query) { console.log('New item: ' + query); },
+          addItem: 'Add new',
+          searchItem: 'Show other'     
+        });
+      });
+    </script>
+  </body>
+
+</html>

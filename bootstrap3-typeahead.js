@@ -31,20 +31,20 @@
   // AMD module is defined
   else if (typeof define === 'function' && define.amd) {
     define(['jquery'], function ($) {
-      return factory ($);
+      return factory($);
     });
   } else {
     factory(root.jQuery);
   }
 
-}(this, function ($) {
+} (this, function ($) {
 
   'use strict';
   // jshint laxcomma: true
 
 
- /* TYPEAHEAD PUBLIC CLASS DEFINITION
-  * ================================= */
+  /* TYPEAHEAD PUBLIC CLASS DEFINITION
+   * ================================= */
 
   var Typeahead = function (element, options) {
     this.$element = $(element);
@@ -65,7 +65,8 @@
     this.listen();
     this.showHintOnFocus = typeof this.options.showHintOnFocus == 'boolean' ? this.options.showHintOnFocus : false;
     this.afterSelect = this.options.afterSelect;
-    this.addItem = false;
+    this.afterSearch = this.options.afterSearch;
+    this.afterAdd = this.options.afterAdd;
   };
 
   Typeahead.prototype = {
@@ -74,14 +75,23 @@
 
     select: function () {
       var val = this.$menu.find('.active').data('value');
-      this.$element.data('active', val);
-      if(this.autoSelect || val) {
+      
+      // No active item or active item is searchItem -> afterSearch()
+      if (!val || val === this.options.searchItem) { 
+        this.afterSearch(this.query);                
+      } 
+      // active item is addItem -> afterAdd()
+      else if (val === this.options.addItem){         
+        this.afterAdd(this.query);
+      }
+      // autoselect or active item -> afterSelect() 
+      else if (this.autoSelect || val) {
         var newVal = this.updater(val);
         this.$element
           .val(this.displayText(newVal) || newVal)
           .change();
         this.afterSelect(newVal);
-      }
+      } 
       return this.hide();
     },
 
@@ -99,13 +109,13 @@
       }), scrollHeight;
 
       scrollHeight = typeof this.options.scrollHeight == 'function' ?
-          this.options.scrollHeight.call() :
-          this.options.scrollHeight;
+        this.options.scrollHeight.call() :
+        this.options.scrollHeight;
 
       (this.$appendTo ? this.$menu.appendTo(this.$appendTo) : this.$menu.insertAfter(this.$element))
         .css({
           top: pos.top + pos.height + scrollHeight
-        , left: pos.left
+          , left: pos.left
         })
         .show();
 
@@ -120,20 +130,19 @@
     },
 
     lookup: function (query) {
-      var items;
-      if (typeof(query) != 'undefined' && query !== null) {
+      if (typeof (query) != 'undefined' && query !== null) {
         this.query = query;
       } else {
-        this.query = this.$element.val() ||  '';
+        this.query = this.$element.val() || '';
       }
 
       if (this.query.length < this.options.minLength) {
         return this.shown ? this.hide() : this;
       }
 
-      var worker = $.proxy(function() {
+      var worker = $.proxy(function () {
 
-        if($.isFunction(this.source)) this.source(this.query, $.proxy(this.process, this));
+        if ($.isFunction(this.source)) this.source(this.query, $.proxy(this.process, this));
         else if (this.source) {
           this.process(this.source);
         }
@@ -160,22 +169,28 @@
         this.$element.data('active', items[0]);
       } else {
         this.$element.data('active', null);
-      }
+      }      
 
+      // Limit the items to show if needed
+      if (this.options.items != 'all' && items.length > this.options.items) {
+        items = items.slice(0, this.options.items);
+        
+        // Add search items
+        if (this.options.searchItem) {
+          items.push(this.options.searchItem);
+        }
+      }
+      
       // Add item
-      if (this.options.addItem){
+      if (this.options.addItem) {
         items.push(this.options.addItem);
       }
 
-      if (this.options.items == 'all') {
-        return this.render(items).show();
-      } else {
-        return this.render(items.slice(0, this.options.items)).show();
-      }
+      return this.render(items).show();
     },
 
     matcher: function (item) {
-    var it = this.displayText(item);
+      var it = this.displayText(item);
       return ~it.toLowerCase().indexOf(this.query.toLowerCase());
     },
 
@@ -196,40 +211,44 @@
     },
 
     highlighter: function (item) {
-          var html = $('<div></div>');
-          var query = this.query;
-          var i = item.toLowerCase().indexOf(query.toLowerCase());
-          var len, leftPart, middlePart, rightPart, strong;
-          len = query.length;
-          if(len === 0){
-              return html.text(item).html();
-          }
-          while (i > -1) {
-              leftPart = item.substr(0, i);
-              middlePart = item.substr(i, len);
-              rightPart = item.substr(i + len);
-              strong = $('<strong></strong>').text(middlePart);
-              html
-                  .append(document.createTextNode(leftPart))
-                  .append(strong);
-              item = rightPart;
-              i = item.toLowerCase().indexOf(query.toLowerCase());
-          }
-          return html.append(document.createTextNode(item)).html();
+      var html = $('<div></div>');
+      var query = this.query;
+      var i = item.toLowerCase().indexOf(query.toLowerCase());
+      var len, leftPart, middlePart, rightPart, strong;
+      len = query.length;
+      if (len === 0) {
+        return html.text(item).html();
+      }
+      while (i > -1) {
+        leftPart = item.substr(0, i);
+        middlePart = item.substr(i, len);
+        rightPart = item.substr(i + len);
+        strong = $('<strong></strong>').text(middlePart);
+        html
+          .append(document.createTextNode(leftPart))
+          .append(strong);
+        item = rightPart;
+        i = item.toLowerCase().indexOf(query.toLowerCase());
+      }
+      return html.append(document.createTextNode(item)).html();
     },
 
     render: function (items) {
       var that = this;
-      var self = this;
       var activeFound = false;
       items = $(items).map(function (i, item) {
-        var text = self.displayText(item);
         i = $(that.options.item).data('value', item);
-        i.find('a').html(that.highlighter(text));
-        if (text == self.$element.val()) {
+        // if the current item is the searchItem or addItem just add it as html
+        if (item === that.options.searchItem || item === that.options.addItem) {
+          i.find('a').html(item);
+        } else {          
+          var text = that.displayText(item);
+          i.find('a').html(that.highlighter(text));
+          if (text == that.$element.val()) {
             i.addClass('active');
-            self.$element.data('active', item);
+            that.$element.data('active', item);
             activeFound = true;
+          }
         }
         return i[0];
       });
@@ -242,7 +261,7 @@
       return this;
     },
 
-    displayText: function(item) {
+    displayText: function (item) {
       return item.name || item;
     },
 
@@ -270,10 +289,10 @@
 
     listen: function () {
       this.$element
-        .on('focus',    $.proxy(this.focus, this))
-        .on('blur',     $.proxy(this.blur, this))
+        .on('focus', $.proxy(this.focus, this))
+        .on('blur', $.proxy(this.blur, this))
         .on('keypress', $.proxy(this.keypress, this))
-        .on('keyup',    $.proxy(this.keyup, this));
+        .on('keyup', $.proxy(this.keyup, this));
 
       if (this.eventSupported('keydown')) {
         this.$element.on('keydown', $.proxy(this.keydown, this));
@@ -285,9 +304,9 @@
         .on('mouseleave', 'li', $.proxy(this.mouseleave, this));
     },
 
-    destroy : function () {
-      this.$element.data('typeahead',null);
-      this.$element.data('active',null);
+    destroy: function () {
+      this.$element.data('typeahead', null);
+      this.$element.data('active', null);
       this.$element
         .off('focus')
         .off('blur')
@@ -301,7 +320,7 @@
       this.$menu.remove();
     },
 
-    eventSupported: function(eventName) {
+    eventSupported: function (eventName) {
       var isSupported = eventName in this.$element;
       if (!isSupported) {
         this.$element.setAttribute(eventName, 'return;');
@@ -313,7 +332,7 @@
     move: function (e) {
       if (!this.shown) return;
 
-      switch(e.keyCode) {
+      switch (e.keyCode) {
         case 9: // tab
         case 13: // enter
         case 27: // escape
@@ -337,7 +356,7 @@
     },
 
     keydown: function (e) {
-      this.suppressKeyPressRepeat = ~$.inArray(e.keyCode, [40,38,9,13,27]);
+      this.suppressKeyPressRepeat = ~$.inArray(e.keyCode, [40, 38, 9, 13, 27]);
       if (!this.shown && e.keyCode == 40) {
         this.lookup();
       } else {
@@ -351,7 +370,7 @@
     },
 
     keyup: function (e) {
-      switch(e.keyCode) {
+      switch (e.keyCode) {
         case 40: // down arrow
         case 38: // up arrow
         case 16: // shift
@@ -361,7 +380,10 @@
 
         case 9: // tab
         case 13: // enter
-          if (!this.shown) return;
+          if (!this.shown) {
+            this.afterSearch(this.query);
+            return;
+          } 
           this.select();
           break;
 
@@ -374,9 +396,9 @@
       }
 
       e.preventDefault();
-   },
+    },
 
-   focus: function (e) {
+    focus: function (e) {
       if (!this.focused) {
         this.focused = true;
         if (this.options.showHintOnFocus) {
@@ -416,10 +438,10 @@
   var old = $.fn.typeahead;
 
   $.fn.typeahead = function (option) {
-	var arg = arguments;
-     if (typeof option == 'string' && option == 'getActive') {
-        return this.data('active');
-     }
+    var arg = arguments;
+    if (typeof option == 'string' && option == 'getActive') {
+      return this.data('active');
+    }
     return this.each(function () {
       var $this = $(this)
         , data = $this.data('typeahead')
@@ -427,7 +449,7 @@
       if (!data) $this.data('typeahead', (data = new Typeahead(this, options)));
       if (typeof option == 'string') {
         if (arg.length > 1) {
-          data[option].apply(data, Array.prototype.slice.call(arg ,1));
+          data[option].apply(data, Array.prototype.slice.call(arg, 1));
         } else {
           data[option]();
         }
@@ -437,22 +459,25 @@
 
   $.fn.typeahead.defaults = {
     source: []
-  , items: 8
-  , menu: '<ul class="typeahead dropdown-menu" role="listbox"></ul>'
-  , item: '<li><a href="#" role="option"></a></li>'
-  , minLength: 1
-  , scrollHeight: 0
-  , autoSelect: true
-  , afterSelect: $.noop
-  , addItem: false
-  , delay: 0
+    , items: 8
+    , menu: '<ul class="typeahead dropdown-menu" role="listbox"></ul>'
+    , item: '<li><a href="#" role="option"></a></li>'
+    , minLength: 1
+    , scrollHeight: 0
+    , autoSelect: true
+    , afterSelect: $.noop
+    , afterSearch: $.noop
+    , afterAdd: $.noop
+    , addItem: false
+    , searchItem: false
+    , delay: 0    
   };
 
   $.fn.typeahead.Constructor = Typeahead;
 
 
- /* TYPEAHEAD NO CONFLICT
-  * =================== */
+  /* TYPEAHEAD NO CONFLICT
+   * =================== */
 
   $.fn.typeahead.noConflict = function () {
     $.fn.typeahead = old;
@@ -460,8 +485,8 @@
   };
 
 
- /* TYPEAHEAD DATA-API
-  * ================== */
+  /* TYPEAHEAD DATA-API
+   * ================== */
 
   $(document).on('focus.typeahead.data-api', '[data-provide="typeahead"]', function (e) {
     var $this = $(this);
