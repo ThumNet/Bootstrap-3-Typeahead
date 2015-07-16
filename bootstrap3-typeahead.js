@@ -378,7 +378,7 @@
         case 9: // tab
         case 13: // enter
           if (!this.shown) {
-            this.afterSearch(this.query);
+            if (this.query) this.afterSearch(this.query);
             return;
           }
           this.select();
