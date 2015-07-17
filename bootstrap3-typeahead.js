@@ -78,11 +78,11 @@
 
       // No active item or active item is searchItem -> afterSearch()
       if (!val || val === this.options.searchItem) {
-        this.afterSearch(this.query);
+        this.afterSearch(this.$element.val());
       }
       // active item is addItem -> afterAdd()
       else if (val === this.options.addItem) {
-        this.afterAdd(this.query);
+        this.afterAdd(this.$element.val());
       }
       // autoselect or active item -> afterSelect()
       else if (this.autoSelect || val) {
@@ -92,7 +92,8 @@
           .change();
         this.afterSelect(newVal);
       }
-      return this.hide();
+
+      return this.shown ? this.hide() : this;
     },
 
     updater: function (item) {
@@ -377,10 +378,6 @@
 
         case 9: // tab
         case 13: // enter
-          if (!this.shown) {
-            if (this.query) this.afterSearch(this.query);
-            return;
-          }
           this.select();
           break;
 
@@ -399,7 +396,7 @@
       if (!this.focused) {
         this.focused = true;
         if (this.options.showHintOnFocus) {
-          this.lookup('');
+          this.lookup();
         }
       }
     },
