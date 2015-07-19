@@ -15,13 +15,19 @@ module.exports = function (grunt) {
       options: {
         jshintrc: '.jshintrc'
       },
-      src: ['bootstrap3-typeahead.js']
+      src: [
+        'src/bootstrap3-typeahead.js',
+        'src/minitemplate.js'
+      ]
     },
 	jscs: {
-		src: "bootstrap3-typeahead.js",
-		options: {
+    options: {
 			config: ".jscsrc",
-		}
+		},
+		src: [
+      "src/bootstrap3-typeahead.js",
+      'src/minitemplate.js'
+    ]		
 	},
     uglify: {
       options: {
@@ -29,7 +35,10 @@ module.exports = function (grunt) {
       },
       core: {
       files: {
-        'bootstrap3-typeahead.min.js': ['bootstrap3-typeahead.js']
+        'dist/bootstrap3-typeahead.min.js': [                        
+            'src/bootstrap3-typeahead.js',
+            'src/minitemplate.js',
+          ]
       }
 	  }
     }

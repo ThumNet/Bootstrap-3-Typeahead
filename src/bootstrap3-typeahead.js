@@ -1,11 +1,13 @@
-/* =============================================================
- * bootstrap3-typeahead.js v3.1.0
- * https://github.com/bassjobsen/Bootstrap-3-Typeahead
- * =============================================================
- * Original written by @mdo and @fat
- * =============================================================
- * Copyright 2014 Bass Jobsen @bassjobsen
- *
+/*!
+* bootstrap3-typeahead
+*   https://github.com/thumnet/Bootstrap-3-Typeahead
+*
+*   Original written by @mdo and @fat
+*   Forked from: https://github.com/bassjobsen/Bootstrap-3-Typeahead
+*
+*/
+
+/*
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,18 +28,18 @@
 
   // CommonJS module is defined
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = factory(require('jquery'));
+    module.exports = factory(require('jquery'), root.minitemplate);
   }
   // AMD module is defined
   else if (typeof define === 'function' && define.amd) {
     define(['jquery'], function ($) {
-      return factory($);
+      return factory($, root.minitemplate);
     });
   } else {
-    factory(root.jQuery);
+    factory(root.jQuery, root.minitemplate);
   }
 
-} (this, function ($) {
+} (this, function ($, minitemplate) {
 
   'use strict';
   // jshint laxcomma: true
@@ -47,26 +49,18 @@
    * ================================= */
 
   var Typeahead = function (element, options) {
-    this.$element = $(element);
     this.options = $.extend({}, $.fn.typeahead.defaults, options);
-    this.matcher = this.options.matcher || this.matcher;
-    this.sorter = this.options.sorter || this.sorter;
-    this.select = this.options.select || this.select;
-    this.autoSelect = typeof this.options.autoSelect == 'boolean' ? this.options.autoSelect : true;
-    this.highlighter = this.options.highlighter || this.highlighter;
-    this.render = this.options.render || this.render;
-    this.updater = this.options.updater || this.updater;
-    this.displayText = this.options.displayText || this.displayText;
-    this.source = this.options.source;
-    this.delay = this.options.delay;
+    this.$element = $(element);
     this.$menu = $(this.options.menu);
     this.$appendTo = this.options.appendTo ? $(this.options.appendTo) : null;
+    this.autoSelect = typeof this.options.autoSelect == 'boolean' ? this.options.autoSelect : true;
+    this.showHintOnFocus = typeof this.options.showHintOnFocus == 'boolean' ? this.options.showHintOnFocus : false;
+    this.onSearch = typeof this.options.onSearch == 'function' ? this.options.onSearch : $.noop;
+    this.onNew = typeof this.options.onNew == 'function' ? this.options.onNew : $.noop;
+    this.onSelect = typeof this.options.onSelect == 'function' ? this.options.onSelect : $.noop;
     this.shown = false;
     this.listen();
-    this.showHintOnFocus = typeof this.options.showHintOnFocus == 'boolean' ? this.options.showHintOnFocus : false;
-    this.afterSelect = this.options.afterSelect;
-    this.afterSearch = this.options.afterSearch;
-    this.afterAdd = this.options.afterAdd;
+    this.setSource(this.options.source);
   };
 
   Typeahead.prototype = {
@@ -78,29 +72,32 @@
 
       // No active item or active item is searchItem -> afterSearch()
       if (!val || val === this.options.searchItem) {
-        this.afterSearch(this.$element.val());
+        this.onSearch(this.$element.val());
       }
-      // active item is addItem -> afterAdd()
-      else if (val === this.options.addItem) {
-        this.afterAdd(this.$element.val());
+      // active item is newItem -> onNew()
+      else if (val === this.options.newItem) {
+        this.onNew(this.$element.val());
       }
       // autoselect or active item -> afterSelect()
       else if (this.autoSelect || val) {
-        var newVal = this.updater(val);
+        this.onSelect(val);
         this.$element
-          .val(this.displayText(newVal) || newVal)
+          .val(val[this.options.compareTo[0]])
           .change();
-        this.afterSelect(newVal);
       }
 
       return this.shown ? this.hide() : this;
     },
 
-    updater: function (item) {
-      return item;
-    },
-
     setSource: function (source) {
+      if ($.isArray(source) && source.length > 0) {
+        // if a string array is the source convert it to an object array to work with minitemplate
+        if (typeof source[0] == 'string') {
+          source = $.map(source, function (val) {
+            return { value: val };
+          });
+        }
+      }
       this.source = source;
     },
 
@@ -147,11 +144,12 @@
       }, this);
 
       clearTimeout(this.lookupWorker);
-      this.lookupWorker = setTimeout(worker, this.delay);
+      this.lookupWorker = setTimeout(worker, this.options.delay);
     },
 
     process: function (items) {
       var that = this;
+      var extras = [];
 
       items = $.grep(items, function (item) {
         return that.matcher(item);
@@ -159,7 +157,7 @@
 
       items = this.sorter(items);
 
-      if (!items.length && !this.options.addItem) {
+      if (!items.length && !this.options.newItem) {
         return this.shown ? this.hide() : this;
       }
 
@@ -175,31 +173,35 @@
 
         // Add search items
         if (this.options.searchItem) {
-          items.push(this.options.searchItem);
+          extras.push(this.options.searchItem);
         }
       }
 
       // Add item
-      if (this.options.addItem) {
-        items.push(this.options.addItem);
+      if (this.options.newItem) {
+        extras.push(this.options.newItem);
       }
 
-      return this.render(items).show();
+      return this.render(items, extras).show();
     },
 
     matcher: function (item) {
-      var it = this.displayText(item);
-      return ~it.toLowerCase().indexOf(this.query.toLowerCase());
+      var q = this.query.toLowerCase();
+      var compareTo = this.options.compareTo;
+      for (var i = 0, l = compareTo.length; i < l; i++) {
+        if (~item[compareTo[i]].toLowerCase().indexOf(q)) { return true; } // ~-1 = 0 -> false if not indexOf
+      }
+      return false;
     },
 
     sorter: function (items) {
       var beginswith = [],
-          caseSensitive = [],
-          caseInsensitive = [],
-          item;
+        caseSensitive = [],
+        caseInsensitive = [],
+        item;
 
       while ((item = items.shift())) {
-        var it = this.displayText(item);
+        var it = item[this.options.compareTo[0]];
         if (!it.toLowerCase().indexOf(this.query.toLowerCase())) beginswith.push(item);
         else if (~it.indexOf(this.query)) caseSensitive.push(item);
         else caseInsensitive.push(item);
@@ -208,45 +210,34 @@
       return beginswith.concat(caseSensitive, caseInsensitive);
     },
 
-    highlighter: function (item) {
-      var html = $('<div></div>');
-      var query = this.query;
-      var i = item.toLowerCase().indexOf(query.toLowerCase());
-      var len, leftPart, middlePart, rightPart, strong;
-      len = query.length;
-      if (len === 0) {
-        return html.text(item).html();
-      }
-      while (i > -1) {
-        leftPart = item.substr(0, i);
-        middlePart = item.substr(i, len);
-        rightPart = item.substr(i + len);
-        strong = $('<strong></strong>').text(middlePart);
-        html
-          .append(document.createTextNode(leftPart))
-          .append(strong);
-        item = rightPart;
-        i = item.toLowerCase().indexOf(query.toLowerCase());
-      }
-      return html.append(document.createTextNode(item)).html();
+    highlighter: function (text) {
+      var regex = new RegExp(this.query, 'gi');
+      return text.replace(regex, function (match) {
+        return '<strong>' + match + '</strong>';
+      });
     },
 
-    render: function (items) {
+    highlightItem: function (item) {
+      var that = this;
+      var highlighted = {};
+      $.each(item, function (key, value) {
+        highlighted[key] = that.highlighter(value);
+      });
+      return highlighted;
+    },
+
+    render: function (items, extras) {
       var that = this;
       var activeFound = false;
       items = $(items).map(function (i, item) {
         i = $(that.options.item).data('value', item);
-        // if the current item is the searchItem or addItem just add it as html
-        if (item === that.options.searchItem || item === that.options.addItem) {
-          i.find('a').html(item);
-        } else {
-          var text = that.displayText(item);
-          i.find('a').html(that.highlighter(text));
-          if (text == that.$element.val()) {
-            i.addClass('active');
-            that.$element.data('active', item);
-            activeFound = true;
-          }
+        var html = minitemplate(that.options.displayTemplate, that.highlightItem(item));
+        i.find('a').html(html);
+
+        if (item[that.options.compareTo[0]] == that.$element.val()) {
+          i.addClass('active');
+          that.$element.data('active', item);
+          activeFound = true;
         }
         return i[0];
       });
@@ -255,32 +246,37 @@
         items.first().addClass('active');
         this.$element.data('active', items.first().data('value'));
       }
+
+      if (items.length > 0 && extras.length > 0) {
+        items.push($(that.options.divider)[0]);
+      }
+
+      $.each(extras, function (i, extra) {
+        i = $(that.options.item).data('value', extra);
+        i.find('a').text(extra);
+        items.push(i[0]);
+      });
+
       this.$menu.html(items);
       return this;
     },
 
-    displayText: function (item) {
-      return item.name || item;
-    },
-
     next: function (event) {
       var active = this.$menu.find('.active').removeClass('active'),
-          next = active.next();
+        next = active.next();
 
-      if (!next.length) {
-        next = $(this.$menu.find('li')[0]);
-      }
+      if (next.hasClass('divider')) next = next.next();
+      if (!next.length) next = $(this.$menu.find('li')[0]);
 
       next.addClass('active');
     },
 
     prev: function (event) {
       var active = this.$menu.find('.active').removeClass('active'),
-          prev = active.prev();
+        prev = active.prev();
 
-      if (!prev.length) {
-        prev = this.$menu.find('li').last();
-      }
+      if (prev.hasClass('divider')) prev = prev.prev();
+      if (!prev.length) prev = this.$menu.find('li').last();
 
       prev.addClass('active');
     },
@@ -377,6 +373,9 @@
           break;
 
         case 9: // tab
+          if (this.shown) this.hide();
+          break;
+
         case 13: // enter
           this.select();
           break;
@@ -438,8 +437,8 @@
     }
     return this.each(function () {
       var $this = $(this),
-          data = $this.data('typeahead'),
-          options = typeof option == 'object' && option;
+        data = $this.data('typeahead'),
+        options = typeof option == 'object' && option;
       if (!data) $this.data('typeahead', (data = new Typeahead(this, options)));
       if (typeof option == 'string') {
         if (arg.length > 1) {
@@ -456,13 +455,13 @@
     items: 8,
     menu: '<ul class="typeahead dropdown-menu" role="listbox"></ul>',
     item: '<li><a href="#" role="option"></a></li>',
+    divider: '<li role="separator" class="divider"></li>',
+    compareTo: ['value'],
+    displayTemplate: '{{value}}',
     minLength: 1,
     scrollHeight: 0,
     autoSelect: true,
-    afterSelect: $.noop,
-    afterSearch: $.noop,
-    afterAdd: $.noop,
-    addItem: false,
+    newItem: false,
     searchItem: false,
     delay: 0
   };

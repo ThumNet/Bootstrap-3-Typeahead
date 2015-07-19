@@ -1,7 +1,7 @@
 {
   "name": "bootstrap-3-typeahead",
   "description": "Bootstrap 3 Typeahead: The typeahead autocomplete plugin for Twitter's Bootstrap 2 ready to use with Bootstrap 3.",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "keywords": [
     "typeahead",
     "autocomplete",
@@ -9,17 +9,17 @@
     "jquery",
     "bootstrap"
   ],
-  "homepage": "https://github.com/bassjobsen/Bootstrap-3-Typeahead/",
-  "author": "Bass Jobsen",
+  "homepage": "https://github.com/thumnet/Bootstrap-3-Typeahead/",
+  "author": "Jeffrey Tummers",
   "scripts": {
     "test": "grunt test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bassjobsen/Bootstrap-3-Typeahead.git"
+    "url": "https://github.com/thumnet/Bootstrap-3-Typeahead.git"
   },
   "bugs": {
-    "url": "https://github.com/bassjobsen/Bootstrap-3-Typeahead/issues"
+    "url": "https://github.com/thumnet/Bootstrap-3-Typeahead/issues"
   },
   "license": {
     "type": "MIT",

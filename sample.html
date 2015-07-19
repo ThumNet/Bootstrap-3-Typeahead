@@ -3,14 +3,19 @@
   
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="bootstrap3-typeahead.js"></script>
+    <script src="src/minitemplate.js"></script>
+    <script src="src/bootstrap3-typeahead.js"></script>    
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
   </head>
   
   <body>
     <div class="container body-content">
-      <h2>Search US states</h2>
-      <input type="text" id="typeaheadInput" autocomplete="off" />
+      <h2>Search US states (default)</h2>
+      <input type="text" id="typeaheadInputDefault" autocomplete="off" />
+      
+      <hr />
+      <h2>Search US states (advanced)</h2>
+      <input type="text" id="typeaheadInputAdvanced" autocomplete="off" />      
     </div>
     
     <script>
@@ -68,17 +73,24 @@
           { "state":"Wisconsin", "abbr":"WI", "capital":"Madison"}, 
           { "state":"Wyoming", "abbr":"WY", "capital":"Cheyenne" }
         ];
+        var stateNames = [];
+        for (var i=0,l=usStates.length;i<l;i++){ stateNames.push(usStates[i].state); }
         
-        $('#typeaheadInput').typeahead({
+        $('#typeaheadInputDefault').typeahead({
+          source: stateNames 
+        });
+        
+        $('#typeaheadInputAdvanced').typeahead({
           source: usStates,
           minLength: 1,
           autoSelect: false, 
           items: 5,
-          displayText: function (item) { return item.state; },
-          afterSelect: function (item) { console.log('Selected item: ' + item.state); },
-          afterSearch: function (query) { console.log('Searched for: ' + query); },
-          afterAdd: function (query) { console.log('New item: ' + query); },
-          addItem: 'Add new',
+          compareTo: ['state', 'abbr'],
+          displayTemplate: '{{state}}<br /><small>{{abbr}}</small>',
+          onSelect: function (item) { console.log('Selected item: ' + item.state); },
+          onSearch: function (query) { console.log('Searched for: ' + query); },
+          onNew: function (query) { console.log('New item: ' + query); },
+          newItem: 'Add new',
           searchItem: 'Show other'     
         });
       });
