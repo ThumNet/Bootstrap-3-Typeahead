@@ -35,9 +35,9 @@ module.exports = function (grunt) {
       },
       core: {
       files: {
-        'dist/bootstrap3-typeahead.min.js': [                        
+        'dist/bootstrap3-typeahead.min.js': [
+            'src/minitemplate.js',                        
             'src/bootstrap3-typeahead.js',
-            'src/minitemplate.js',
           ]
       }
 	  }
